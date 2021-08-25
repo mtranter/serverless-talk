@@ -1,0 +1,5 @@
+FROM node:14.17.0-stretch-slim
+
+release:
+   BUILD ./infra/infra+release
+   BUILD ./backend/questions/infra+release 

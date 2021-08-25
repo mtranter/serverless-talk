@@ -1,0 +1,50 @@
+FROM hashicorp/terraform:1.0.0
+
+init:
+   WORKDIR /project
+   COPY --dir ./ ./
+   RUN mkdir ~/.ssh && ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts && touch -t 202001010000 ~/.ssh/known_hosts
+   RUN --secret AWS_ACCESS_KEY_ID=+secrets/AWS_ACCESS_KEY_ID \
+         --secret AWS_SECRET_ACCESS_KEY=+secrets/AWS_SECRET_ACCESS_KEY \
+         --secret AWS_SESSION_TOKEN=+secrets/AWS_SESSION_TOKEN \
+         terraform init
+
+plan:
+   WORKDIR /project
+   COPY --dir ./ ./
+   RUN --secret AWS_ACCESS_KEY_ID=+secrets/AWS_ACCESS_KEY_ID \
+         --secret AWS_SECRET_ACCESS_KEY=+secrets/AWS_SECRET_ACCESS_KEY \
+         --secret AWS_SESSION_TOKEN=+secrets/AWS_SESSION_TOKEN \
+         terraform init && terraform plan --out tfplan && \
+         terraform show -json tfplan > tfplan.json
+   SAVE ARTIFACT ./tfplan.binary
+   SAVE ARTIFACT ./tfplan
+   SAVE IMAGE --cache-hint
+
+checkov:
+   FROM bridgecrew/checkov
+   ENTRYPOINT [""]
+   WORKDIR /project
+   COPY +plan/tfplan.json ./
+   COPY +plan/tfplan ./
+   RUN checkov -f ./tfplan.json
+   SAVE ARTIFACT ./tfplan
+
+release:
+   FROM +init
+   COPY +checkov/tfplan ./
+   RUN --secret AWS_ACCESS_KEY_ID=+secrets/AWS_ACCESS_KEY_ID \
+         --secret AWS_SECRET_ACCESS_KEY=+secrets/AWS_SECRET_ACCESS_KEY \
+         --secret AWS_SESSION_TOKEN=+secrets/AWS_SESSION_TOKEN \
+         terraform apply -auto-approve ./tfplan
+   SAVE ARTIFACT ./state.json
+   SAVE ARTIFACT ./tf.state
+   SAVE IMAGE --cache-hint
+
+
+destroy:
+   FROM +init
+   RUN --secret AWS_ACCESS_KEY_ID=+secrets/AWS_ACCESS_KEY_ID \
+         --secret AWS_SECRET_ACCESS_KEY=+secrets/AWS_SECRET_ACCESS_KEY \
+         --secret AWS_SESSION_TOKEN=+secrets/AWS_SESSION_TOKEN \
+         terraform destroy -auto-approve

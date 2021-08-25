@@ -1,0 +1,20 @@
+FROM node:14.17.0-stretch-slim
+
+deps:
+   WORKDIR /project
+   COPY ./yarn.lock ./package.json ./tsconfig.json ./
+   RUN yarn install
+   SAVE ARTIFACT /project
+   SAVE IMAGE --cache-hint
+
+build:
+   RUN apt update && apt install -y zip
+   COPY --dir +deps/project /
+   WORKDIR /project
+   COPY --dir ./src ./scripts ./
+   COPY ./jest.config.js ./tsconfig.json ./jest-dynalite-config.js ./
+   RUN yarn build
+   RUN yarn test
+   RUN yarn package
+   SAVE ARTIFACT ./package /package
+   SAVE IMAGE --cache-hint
