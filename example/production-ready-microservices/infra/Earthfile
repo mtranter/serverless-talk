@@ -17,8 +17,8 @@ plan:
          --secret AWS_SESSION_TOKEN=+secrets/AWS_SESSION_TOKEN \
          terraform init && terraform plan --out tfplan && \
          terraform show -json tfplan > tfplan.json
-   SAVE ARTIFACT ./tfplan.binary
    SAVE ARTIFACT ./tfplan
+   SAVE ARTIFACT ./tfplan.json AS LOCAL ./tfplan.json
    SAVE IMAGE --cache-hint
 
 checkov:
@@ -29,6 +29,17 @@ checkov:
    COPY +plan/tfplan ./
    RUN checkov -f ./tfplan.json
    SAVE ARTIFACT ./tfplan
+
+scan:
+   FROM accurics/terrascan:latest
+   ENTRYPOINT [""]
+   WORKDIR /project
+   COPY ./terrascan.toml ./
+   COPY +plan/tfplan.json ./
+   COPY +plan/tfplan ./
+   RUN terrascan scan -i tfplan -f ./tfplan.json -c ./terrascan.toml -v
+   SAVE ARTIFACT ./tfplan
+
 
 release:
    FROM +init

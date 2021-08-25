@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     key    = "terraform/tf-talk-approvals.tfstate"
-    bucket = "tf-talk-mgmt"
+    bucket = "serverless-talk-tf-state"
     region = "ap-southeast-2"
   }
 }

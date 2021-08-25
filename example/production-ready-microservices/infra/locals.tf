@@ -1,3 +1,3 @@
 locals {
-    website_host = "questions.${var.parent_domain}"
+    website_host = "www.${var.hosted_zone}"
 }

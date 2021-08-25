@@ -1,0 +1,8 @@
+[severity]
+level = "medium"
+[rules]
+    skip-rules = [
+        "AWS.Route53HostedZone.DNSManagement.High.0422",
+        "AWS.APIGateway.Logging.Medium.0567",
+        "AWS.APIGateway.NetworkSecurity.Medium.0565"
+    ]

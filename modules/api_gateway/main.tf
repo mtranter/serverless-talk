@@ -32,6 +32,7 @@ resource "aws_iam_role_policy_attachment" "can_log" {
 resource "aws_api_gateway_rest_api" "api" {
   name        = var.api_gw_name
   description = var.api_gw_description
+  minimum_compression_size = 0
   tags        = var.tags
 }
 
@@ -112,8 +113,6 @@ module "log_group" {
   source = "./../../primitives/aws/log_group"
   name   = "/aws/api-gateway-stage/${var.default_stage_name}/access_logs"
 }
-
-
 
 resource "aws_api_gateway_stage" "default_stage" {
   deployment_id         = aws_api_gateway_deployment.initial_deploy.id
